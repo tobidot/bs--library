@@ -39,6 +39,18 @@ export class Vector2D implements Vector2DLike {
     }
 
     /**
+     * Create a vector from an angle and length.
+     * @param radians 
+     * @param length 
+     */
+    public static fromAngle(radians: number, length: number = 1): Vector2D {
+        return new Vector2D(
+            Math.cos(radians) * length,
+            Math.sin(radians) * length
+        );
+    }
+
+    /**
      * Set the values of this vector to the values of another vector.
      * @param other 
      * @returns 
