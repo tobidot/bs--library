@@ -140,6 +140,19 @@ export class Rect implements RectLike, BoundingBox {
     }
 
     /**
+     * Determine if this rect intersects the given rect
+     * @param other
+     * @returns True if the rects intersect, false otherwise
+     * @see https://stackoverflow.com/a/306332/1048862
+     * */
+    public intersects(other: RectLike): boolean {
+        return this.x < other.x + other.w
+            && this.x + this.w > other.x
+            && this.y < other.y + other.h
+            && this.y + this.h > other.y;
+    }
+
+    /**
      * Gets the distance between this rect and the given rect. 
      * If the rects overlap, the distance is 0.
      * 
