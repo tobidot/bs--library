@@ -2,6 +2,11 @@ import { Vector2D, Vector2DLike } from "../math";
 import { BoundingBox, Rect } from "../math/Rect";
 import { Collision, PhysicsProxiable, PhysicsProxy, PhysicsEngine } from "./Physics";
 
+export interface AABBPhysicsEngineOptions {
+    world_box: Rect;
+    simple_collisions?: boolean;
+}
+
 /**
  * Handles collisions between Axis-Aligned Bounding Boxes (AABBs) that are moving.
  * 
@@ -15,7 +20,7 @@ import { Collision, PhysicsProxiable, PhysicsProxy, PhysicsEngine } from "./Phys
 export class AABBPhysicsEngine extends PhysicsEngine<AABBCollisionProxy> {
 
     constructor(
-        public world_box: Rect,
+        public options: AABBPhysicsEngineOptions,
     ) {
         super();
     }
@@ -25,7 +30,7 @@ export class AABBPhysicsEngine extends PhysicsEngine<AABBCollisionProxy> {
      * 
      * @param delta_seconds 
      */
-    public update(delta_seconds:number): void {
+    public update(delta_seconds: number): void {
         delta_seconds = 0.016; // 60 FPS
         this.proxies.forEach(proxy => {
             proxy.outerBox.move(proxy.velocity.cpy().mul(delta_seconds));
@@ -41,7 +46,7 @@ export class AABBPhysicsEngine extends PhysicsEngine<AABBCollisionProxy> {
         // inset the screen box by the size of the text box,
         // this will be the area the textbox should always touch
         this.proxies.forEach(proxy => {
-            const area_of_freedom = this.world_box.cpy().inset(proxy.outerBox.size);
+            const area_of_freedom = this.options.world_box.cpy().inset(proxy.outerBox.size);
             const distance = area_of_freedom.distance(proxy.outerBox);
             if (Math.abs(distance.x) > 0) {
                 proxy.velocity.x = Math.abs(proxy.velocity.x) * ((distance.x > 0) ? -1 : 1);
@@ -81,7 +86,7 @@ export class AABBPhysicsEngine extends PhysicsEngine<AABBCollisionProxy> {
      */
     public handleCollision(proxy: AABBCollisionProxy, other: AABBCollisionProxy, overlap: BoundingBox) {
         // create a collision object
-        const collision : AABBCollision = {
+        const collision: AABBCollision = {
             overlap: overlap,
             a: proxy,
             b: other,
@@ -90,7 +95,7 @@ export class AABBPhysicsEngine extends PhysicsEngine<AABBCollisionProxy> {
         this.solveCollision(collision);
         // call the onCollision callback for each box
         proxy.onCollision(other, collision);
-        other.onCollision(proxy, collision);    
+        other.onCollision(proxy, collision);
         // add the collision to the list of collisions
         this.collisions.push(collision);
     }
@@ -100,7 +105,23 @@ export class AABBPhysicsEngine extends PhysicsEngine<AABBCollisionProxy> {
      * @param collision 
      */
     public solveCollision(collision: AABBCollision) {
-        const {overlap,a, b} = collision;
+        if (this.options.simple_collisions) {
+            this.solveCollisionSimple(collision);
+        } else {
+            this.solveCollisionComplex(collision);
+        }
+
+    }
+
+    /**
+     * This solves collisions by moving the boxes out of the overlap.
+     * and reversing the velocity of the box that is moving into the other box.
+     * 
+     * @param collision 
+     */
+    public solveCollisionSimple(collision: AABBCollision) {
+
+        const { overlap, a, b } = collision;
         const overlap_rect = Rect.fromBoundingBox(overlap);
         if (overlap_rect.w < overlap_rect.h) {
             // if the overlap is taller than it is wide, then the collision is horizontal
@@ -110,13 +131,52 @@ export class AABBPhysicsEngine extends PhysicsEngine<AABBCollisionProxy> {
             const b_direction = (overlap_rect.center.x < b.outerBox.center.x) ? 1 : -1;
             b.velocity.x = Math.abs(b.velocity.x) * b_direction;
             b.outerBox.center.x += overlap_rect.w / 2 * b_direction;
-        } else {                        
+        } else {
             // if the overlap is wider than it is tall, then the collision is vertical
             const a_direction = (overlap_rect.center.y < a.outerBox.center.y) ? 1 : -1;
             a.velocity.y = Math.abs(a.velocity.y) * a_direction;
             a.outerBox.center.y += overlap_rect.h / 2 * a_direction;
             const b_direction = (overlap_rect.center.y < b.outerBox.center.y) ? 1 : -1;
             b.velocity.y = Math.abs(b.velocity.y) * b_direction;
+            b.outerBox.center.y += overlap_rect.h / 2 * b_direction;
+        }
+    }
+
+    /**
+     * 
+     * This solves collisions by moving the boxes out of the overlap.
+     * and calculating a new velocity for each box based on the impact.
+     * 
+     * @param collision 
+     */
+    public solveCollisionComplex(collision: AABBCollision) {
+
+        const { overlap, a, b } = collision;
+        const overlap_rect = Rect.fromBoundingBox(overlap);
+
+        // calculate the new velocity for each box
+        const a_mass = a.outerBox.size.x * a.outerBox.size.y;
+        const b_mass = b.outerBox.size.x * b.outerBox.size.y;
+        const total_mass = a_mass + b_mass;
+        const impact_vector_a = b.outerBox.center.cpy().sub(a.outerBox.center).normalize();
+        const impact_vector_b = impact_vector_a.cpy().mul(-1);
+        const a_force = a.velocity.dot(impact_vector_a) * (a_mass);
+        const b_force = b.velocity.dot(impact_vector_b) * (b_mass);
+        const impact_force = a_force + b_force;
+        a.velocity.add(impact_vector_b.cpy().mul(impact_force / a_mass)).mul(0.999);
+        b.velocity.add(impact_vector_a.cpy().mul(impact_force / b_mass)).mul(0.999);
+        
+        if (overlap_rect.w < overlap_rect.h) {
+            // if the overlap is taller than it is wide, then the collision is horizontal
+            const a_direction = (overlap_rect.center.x < a.outerBox.center.x) ? 1 : -1;
+            a.outerBox.center.x += overlap_rect.w / 2 * a_direction;
+            const b_direction = (overlap_rect.center.x < b.outerBox.center.x) ? 1 : -1;
+            b.outerBox.center.x += overlap_rect.w / 2 * b_direction;
+        } else {
+            // if the overlap is wider than it is tall, then the collision is vertical
+            const a_direction = (overlap_rect.center.y < a.outerBox.center.y) ? 1 : -1;
+            a.outerBox.center.y += overlap_rect.h / 2 * a_direction;
+            const b_direction = (overlap_rect.center.y < b.outerBox.center.y) ? 1 : -1;
             b.outerBox.center.y += overlap_rect.h / 2 * b_direction;
         }
     }
@@ -140,6 +200,6 @@ export class AABBCollisionProxy extends PhysicsProxy {
         public velocity: Vector2D,
         reference: PhysicsProxiable,
     ) {
-        super( outerBox, reference);
+        super(outerBox, reference);
     }
 }

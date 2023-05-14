@@ -15,6 +15,7 @@ export interface Vector2DLike {
  * use cpy() to create a copy of the vector. 
  */
 export class Vector2D implements Vector2DLike {
+
     public x: number;
     public y: number;
 
@@ -96,6 +97,41 @@ export class Vector2D implements Vector2DLike {
             this.x *= scalar;
             this.y *= scalar;
         }
+        return this;
+    }
+
+    /**
+     * Calculate the dot product of this vector and another vector.
+     * @param other  
+     */
+    public dot(other: Vector2DLike): number {
+        return this.x * other.x + this.y * other.y;
+    }
+
+    /**
+     * @returns Return the length of this vector squared.
+     **/
+    public length2(): number {
+        return this.x * this.x + this.y * this.y;
+    }
+
+    /**
+     * @returns the length of this vector.
+     */
+    public length(): number {
+        return Math.sqrt(this.x * this.x + this.y * this.y);
+    }
+
+    /**
+     * Make this vector a unit vector.
+     */
+    public normalize() : this {
+        const length = this.length();
+        if (length === 0) {
+            return this;
+        }
+        this.x /= length;
+        this.y /= length;
         return this;
     }
 }
