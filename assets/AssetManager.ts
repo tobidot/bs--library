@@ -97,7 +97,6 @@ export class AssetManager {
         demo.translate(demo.canvas.width / 2, demo.canvas.height / 2);
         await Promise.all(promises);
         demo.resetTransform();
-        await sleep(1000);
     }
 
     public hasAsset(assetName: string): boolean {

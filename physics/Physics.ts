@@ -1,9 +1,11 @@
+import { Vector2D } from "../math";
 import { BoundingBox, Rect } from "../math/Rect";
 
 /**
  * Represents an entity inside the Physics engine.
  */
 export interface PhysicsProxiable {
+    onWorldCollision?: (distance: Vector2D) => void;
     onCollision?: (other: PhysicsProxy, collision: Collision) => void;
 }
 
@@ -11,7 +13,7 @@ export interface PhysicsProxiable {
  * Represents an physics entity.
  */
 export class PhysicsProxy {
-    public static next_id = 0;
+    public static next_id = 1;
     public id: number = PhysicsProxy.next_id++;
 
     constructor(
@@ -27,8 +29,14 @@ export class PhysicsProxy {
      * @param collision 
      */
     public onCollision(other: PhysicsProxy, collision: Collision) {
-        if ( !!this.reference.onCollision ) {
+        if (!!this.reference.onCollision) {
             this.reference.onCollision(other, collision);
+        }
+    }
+
+    public onWorldCollision(distance: Vector2D) {
+        if (!!this.reference.onWorldCollision) {
+            this.reference.onWorldCollision(distance);
         }
     }
 }
@@ -45,21 +53,21 @@ export interface Collision {
 /**
  * Base abstract class for a physics engine.
  */
-export abstract class PhysicsEngine<COLLISION_PROXY_TYPE extends PhysicsProxy> { 
-    public collisions = new Array<Collision>(); 
+export abstract class PhysicsEngine<COLLISION_PROXY_TYPE extends PhysicsProxy> {
+    public collisions = new Array<Collision>();
     public proxies = new Array<COLLISION_PROXY_TYPE>();
 
     /**
      * Handle an update to the physics engine.
      * @param delta_seconds 
      */
-    public abstract update(delta_seconds:number):void;
+    public abstract update(delta_seconds: number): void;
 
     /**
      * Add a proxied entity to the physics engine.
      * @param proxy 
      */
-    public add(proxy: COLLISION_PROXY_TYPE) : COLLISION_PROXY_TYPE {
+    public add(proxy: COLLISION_PROXY_TYPE): COLLISION_PROXY_TYPE {
         this.proxies.push(proxy);
         return proxy;
     }
@@ -68,7 +76,7 @@ export abstract class PhysicsEngine<COLLISION_PROXY_TYPE extends PhysicsProxy> {
      * Remove a proxied entity from the physics engine by id.
      * @param proxy 
      */
-    public remove(proxy: COLLISION_PROXY_TYPE|number) : void {
+    public remove(proxy: COLLISION_PROXY_TYPE | number): void {
         const proxy_id = proxy instanceof PhysicsProxy ? proxy.id : proxy;
         this.proxies = this.proxies.filter(p => p.id !== proxy_id);
     }

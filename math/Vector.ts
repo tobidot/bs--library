@@ -134,4 +134,11 @@ export class Vector2D implements Vector2DLike {
         this.y /= length;
         return this;
     }
+
+    /**
+     * @returns the angle of this vector in radians.
+     */
+    public angle() : number {
+        return Math.atan2(this.y, this.x);
+    }
 }

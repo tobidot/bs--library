@@ -7,9 +7,9 @@ export type KeyboardState = Map<KeyName, KeyState>;
  * Represents the state of a key.
  */
 export interface KeyState {
-    /** @var key name of the key */
+    /** @var name name of the key */
     name: KeyName;
-    /** @var state true if the key is down, false otherwise */
+    /** @var is_down true if the key is down, false otherwise */
     is_down: boolean;
     /** @var since the timestamp at which the key has last changed */
     since: number;
@@ -19,8 +19,8 @@ export interface KeyState {
  * Represents a controller that accepts keyboard input.
  */
 export interface KeyboardController {
-    onKeyDown(event: KeyDownEvent): void;
-    onKeyUp(event: KeyUpEvent): void;
+    onKeyDown?(event: KeyDownEvent): void;
+    onKeyUp?(event: KeyUpEvent): void;
 }
 
 /**
@@ -89,8 +89,7 @@ export class KeyboardHandler {
         const key = this.getKey(key_name);
         key.is_down = true;
         key.since = event.timeStamp;
-        this.controller_callback()
-            .onKeyDown(new KeyDownEvent(key));
+        this.controller_callback()?.onKeyDown?.(new KeyDownEvent(key));
     }
 
     /**
@@ -102,8 +101,7 @@ export class KeyboardHandler {
         const key = this.getKey(key_name);
         key.is_down = false;
         key.since = event.timeStamp;
-        this.controller_callback()
-            .onKeyUp(new KeyUpEvent(key));
+        this.controller_callback()?.onKeyUp?.(new KeyUpEvent(key));
     }
 
     /**
@@ -116,8 +114,7 @@ export class KeyboardHandler {
             const key = this.getKey(key_name);
             key.is_down = false;
             key.since = event.timeStamp;      
-            this.controller_callback()
-                .onKeyUp(new KeyUpEvent(key));      
+            this.controller_callback()?.onKeyUp?.(new KeyUpEvent(key));      
         });
     }
 
