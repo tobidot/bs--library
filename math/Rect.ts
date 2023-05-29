@@ -140,6 +140,18 @@ export class Rect implements RectLike, BoundingBox {
     }
 
     /**
+     * Check if the given position is inside this rect
+     * @param position 
+     */
+    public contains(position: Vector2D): boolean {
+        return position.x >= this.left
+            && position.x <= this.right
+            && position.y >= this.top
+            && position.y <= this.bottom
+        ;
+    }
+
+    /**
      * Determine if this rect intersects the given rect
      * @param other
      * @returns True if the rects intersect, false otherwise

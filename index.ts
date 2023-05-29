@@ -4,3 +4,4 @@ export * from "./flow";
 export * from "./dom";
 export * from "./physics";
 export * from "./assets";
+export * from "./audio";

@@ -25,6 +25,7 @@ export interface MouseController {
     onMouseMove?(event: MouseMoveEvent): void;
     onMouseDown?(event: MouseDownEvent): void;
     onMouseUp?(event: MouseUpEvent): void;
+    onMouseWheel?(event: MouseWheelEvent): void;
 }
 
 /**
@@ -41,6 +42,13 @@ export class MouseUpEvent extends MouseButtonEvent { };
 export class MouseMoveEvent extends MouseEvent {
     constructor(
         public position: Vector2D
+    ) { super(); };
+};
+export class MouseWheelEvent extends MouseEvent {
+    constructor(
+        public deltaX: number,
+        public deltaY: number,
+        public deltaZ: number,
     ) { super(); };
 };
 
@@ -80,9 +88,9 @@ export class MouseHandler {
         this.app.addEventListener("mousedown", this.onMouseDown);
         this.app.addEventListener("mouseup", this.onMouseUp);
         this.app.addEventListener("mousemove", this.onMouseMove);
+        this.app.addEventListener("wheel", this.onMouseWheel);
         this.app.addEventListener("blur", this.onBlur);
-        this.app.addEventListener("resize", this.onResize);
-        this.canvas.addEventListener("resize", this.onResize);
+        window.addEventListener("resize", this.onResize);
         this.onResize();
     }
 
@@ -114,7 +122,15 @@ export class MouseHandler {
     protected onResize = () => {
         const rect = this.canvas.getBoundingClientRect();
         this.canvas_rect = Rect.fromBoundingBox(rect);
-        this.screen_rect = new Rect(0, 0,  this.canvas.width , this.canvas.height );
+        this.screen_rect = new Rect(0, 0, this.canvas.width, this.canvas.height);
+    }
+
+    /**
+     * A mouse button has been pressed.
+     * @param event 
+     */
+    protected onMouseWheel = (event: { deltaX: number, deltaY: number, deltaZ: number }) => {
+        this.controller_callback()?.onMouseWheel?.(new MouseWheelEvent(event.deltaX, event.deltaY, event.deltaZ));
     }
 
     /**
@@ -138,7 +154,7 @@ export class MouseHandler {
         const button = this.getButton(button_name);
         button.is_down = true;
         button.since = event.timeStamp;
-        this.controller_callback()?.onMouseDown?.(new MouseUpEvent(button));
+        this.controller_callback()?.onMouseUp?.(new MouseUpEvent(button));
     }
 
 
