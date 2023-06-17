@@ -32,25 +32,25 @@ export class Rect implements RectLike, BoundingBox {
      * Construct from a top left and a bottom right
      * or from a center and a size
      * @param other 
-     * @param y 
-     * @param w 
-     * @param h 
+     * @param top_y 
+     * @param width 
+     * @param height 
      */
     constructor(
         other: RectLike | number,
-        y?: number,
-        w?: number,
-        h?: number,
+        top_y?: number,
+        width?: number,
+        height?: number,
     ) {
         if (other instanceof Object) {
             this.center = new Vector2D(other.x + other.w / 2, other.y + other.h / 2);
             this.size = new Vector2D(other.w, other.h);
         } else {
-            assert(y !== undefined);
-            assert(w !== undefined);
-            assert(h !== undefined);
-            this.center = new Vector2D(other + w / 2, y + h / 2);
-            this.size = new Vector2D(w, h);
+            assert(top_y !== undefined);
+            assert(width !== undefined);
+            assert(height !== undefined);
+            this.center = new Vector2D(other + width / 2, top_y + height / 2);
+            this.size = new Vector2D(width, height);
         }
     }
 
@@ -148,7 +148,7 @@ export class Rect implements RectLike, BoundingBox {
             && position.x <= this.right
             && position.y >= this.top
             && position.y <= this.bottom
-        ;
+            ;
     }
 
     /**
@@ -182,11 +182,19 @@ export class Rect implements RectLike, BoundingBox {
     }
 
     public get x() {
-        return this.center.x - this.size.x / 2;
+        return this.left;
     }
 
     public get y() {
-        return this.center.y - this.size.y / 2;
+        return this.top;
+    }
+
+    public set x(value: number) {
+        this.left = value;
+    }
+
+    public set y(value: number) {
+        this.top = value;
     }
 
     public get w() {
@@ -197,20 +205,62 @@ export class Rect implements RectLike, BoundingBox {
         return this.size.y;
     }
 
+    public set w(value: number) {
+        this.width = value;
+    }
+
+    public set h(value: number) {
+        this.height = value;
+    }
+
+    public get width() {
+        return this.size.x;
+    }
+
+    public get height() {
+        return this.size.y;
+    }
+
+    public set width(value: number) {
+        this.center.x += (value - this.size.x) / 2;
+        this.size.x = value;
+    }
+
+    public set height(value: number) {
+        this.center.y += (value - this.size.y) / 2;
+        this.size.y = value;
+    }
+
     public get left(): number {
-        return this.x;
+        return this.center.x - this.size.x / 2;
     }
 
     public get right(): number {
-        return this.x + this.w;
+        return this.center.x + this.size.x / 2;
     }
 
     public get top(): number {
-        return this.y;
+        return this.center.y - this.size.y / 2;
     }
 
     public get bottom(): number {
-        return this.y + this.h;
+        return this.center.y + this.size.y / 2;
+    }
+
+    public set left(value: number) {
+        this.center.x = value + this.size.x / 2;
+    }
+
+    public set right(value: number) {
+        this.center.x = value - this.size.x / 2;
+    }
+
+    public set top(value: number) {
+        this.center.y = value + this.size.y / 2;
+    }
+
+    public set bottom(value: number) {
+        this.center.y = value - this.size.y / 2;
     }
 
     public asBoundingBox(): BoundingBox {

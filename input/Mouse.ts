@@ -80,7 +80,7 @@ export class MouseHandler {
         /**
          *  @var controller_callback a callback that returns the controller that will handle the mouse input 
          */
-        public controller_callback: () => MouseController
+        public controller_callback: () => Array<MouseController>
     ) {
     }
 
@@ -130,7 +130,9 @@ export class MouseHandler {
      * @param event 
      */
     protected onMouseWheel = (event: { deltaX: number, deltaY: number, deltaZ: number }) => {
-        this.controller_callback()?.onMouseWheel?.(new MouseWheelEvent(event.deltaX, event.deltaY, event.deltaZ));
+        this.controller_callback().forEach(
+            (controller)=> controller.onMouseWheel?.(new MouseWheelEvent(event.deltaX, event.deltaY, event.deltaZ))
+        );
     }
 
     /**
@@ -142,7 +144,9 @@ export class MouseHandler {
         const button = this.getButton(button_name);
         button.is_down = true;
         button.since = event.timeStamp;
-        this.controller_callback()?.onMouseDown?.(new MouseDownEvent(button));
+        this.controller_callback().forEach(
+            (controller)=> controller.onMouseDown?.(new MouseDownEvent(button))
+        );
     }
 
     /**
@@ -154,7 +158,9 @@ export class MouseHandler {
         const button = this.getButton(button_name);
         button.is_down = true;
         button.since = event.timeStamp;
-        this.controller_callback()?.onMouseUp?.(new MouseUpEvent(button));
+        this.controller_callback().forEach(
+            (controller)=> controller.onMouseUp?.(new MouseUpEvent(button))
+        );
     }
 
 
@@ -166,7 +172,9 @@ export class MouseHandler {
         this.position.x = (event.clientX - this.canvas_rect.left) / this.canvas_rect.w * this.screen_rect.w;
         this.position.y = (event.clientY - this.canvas_rect.top) / this.canvas_rect.h * this.screen_rect.h;
         this.not_moved_since = event.timeStamp;
-        this.controller_callback()?.onMouseMove?.(new MouseMoveEvent(this.position.cpy()));
+        this.controller_callback().forEach(
+            (controller) => controller.onMouseMove?.(new MouseMoveEvent(this.position.cpy()))
+        );
     }
 
     /**
@@ -179,7 +187,9 @@ export class MouseHandler {
             const key = this.getButton(key_name);
             key.is_down = false;
             key.since = event.timeStamp;
-            this.controller_callback()?.onMouseUp?.(new MouseUpEvent(key));
+            this.controller_callback().forEach(
+                (controller) => controller.onMouseUp?.(new MouseUpEvent(key))
+            );
         });
     }
 
